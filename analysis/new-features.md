@@ -778,6 +778,230 @@ registerRenderer('fern-document', FernDocumentRenderer);
 
 ---
 
+## 16. UserForm Code Block (Generative UI with Send-as-Message)
+
+**Purpose**: Render interactive forms/chips in the chat that users can fill out and submit as messages back to the agent. This enables **generative UI** where the agent outputs structured JSON that renders as interactive UI components.
+
+**Project**: BPMv0
+
+**Files**:
+- `components/assistant-ui/canvas/renderers/userform/userform-codeblock.tsx` - Main renderer
+- `components/assistant-ui/canvas/renderers/userform/userform-types.ts` - Schema types
+- `components/assistant-ui/canvas/renderers/userform/fields/` - Field components
+
+**How It Works**:
+
+The agent outputs a markdown code block with `userform` language:
+
+````markdown
+```userform
+{
+  "form_id": "confirm_action",
+  "title": "Confirm Settings",
+  "mode": "form",
+  "fields": [
+    { "id": "name", "type": "text", "label": "Project Name", "value": "My Project" },
+    { "id": "notes", "type": "textarea", "label": "Additional Notes" }
+  ],
+  "actions": [
+    { "id": "confirm", "label": "Confirm & Generate", "variant": "primary" }
+  ]
+}
+```
+````
+
+**Key Implementation**:
+
+```typescript
+// Send user's form response back to the thread
+const sendMessage = useCallback(
+  (message: string) => {
+    if (runtime && message.trim()) {
+      runtime.append({
+        role: "user",
+        content: [{ type: "text", text: message }],
+      });
+      setSubmitted(true);
+      setSubmittedMessage(message);
+    }
+  },
+  [runtime]
+);
+
+// Handle action button click - formats form values into message
+const handleAction = useCallback(
+  (action: UserFormAction) => {
+    let message: string;
+    if (action.message) {
+      message = action.message;
+    } else {
+      // Structured format with clear separation of instruction and inputs
+      message = formatStructuredMessage(action, data.title, formValues, data.fields);
+    }
+    sendMessage(message);
+  },
+  [formValues, data.title, data.fields, sendMessage]
+);
+```
+
+**Two Modes**:
+
+1. **Form Mode** - Full form with fields and action buttons:
+```typescript
+{
+  "mode": "form",
+  "fields": [...],
+  "actions": [{ "id": "submit", "label": "Submit", "variant": "primary" }]
+}
+```
+
+2. **Chips Mode** - Simple clickable options (like quick replies):
+```typescript
+{
+  "mode": "chips",
+  "title": "What would you like to do?",
+  "options": [
+    { "label": "Generate Report", "value": "report", "message": "Generate a detailed report" },
+    { "label": "Skip", "value": "skip", "message": "Skip this step", "recommended": true }
+  ]
+}
+```
+
+**Supported Field Types**:
+- `text` - Single line input
+- `textarea` - Multi-line input
+- `select` - Dropdown
+- `multiselect` - Multi-select dropdown
+- `checkbox` - Boolean toggle
+- `radio` - Radio button group
+- `tags` - Tag input with suggestions
+- `chips` - Clickable chip selection
+
+**Structured Message Output**:
+
+When submitted, forms generate well-formatted messages:
+
+```markdown
+## Request: Generate L2 Use Cases
+
+### User Instructions
+> Focus on the authentication flow
+
+### Confirmed Inputs for "Use Case Configuration"
+
+**Module:** Authentication
+**Include Examples:** Yes
+**Tags:**
+- security
+- login
+```
+
+**Why This Pattern Matters**:
+
+This is a **default behavior pattern** that should be standard in assistant-ui:
+- Agents can output interactive UI without custom tool renderers
+- Users can confirm/modify values before sending
+- Clear separation between agent-generated defaults and user input
+- Works with any LLM backend - just output the JSON schema
+
+---
+
+## 17. Canvas Item Highlighting (Scroll-to & Flash)
+
+**Purpose**: When tool calls reference specific items in the canvas (by ID or path), automatically scroll to and highlight those items. Creates a visual connection between chat messages and canvas content.
+
+**Project**: BPMv0
+
+**Files**:
+- `lib/bpm/selectionState.ts` - Zustand store with `scrollToItem` action
+- `components/assistant-ui/canvas/renderers/bpm/SelectableItemWrapper.tsx` - Wrapper component
+
+**Key Implementation**:
+
+```typescript
+// In selectionState.ts - Zustand store
+interface SelectionState {
+  scrollTargetId: string | null;
+  scrollToItem: (refId: string) => void;
+  clearScrollTarget: () => void;
+}
+
+// Action to trigger scroll
+scrollToItem: (refId) => set(
+  { scrollTargetId: refId },
+  undefined,
+  'scrollToItem'
+),
+```
+
+**SelectableItemWrapper** - Wraps canvas items to enable scroll-to:
+
+```typescript
+export function SelectableItemWrapper({ children, reference }: Props) {
+  const scrollTargetId = useSelectionStore((s) => s.scrollTargetId);
+  const clearScrollTarget = useSelectionStore((s) => s.clearScrollTarget);
+  const elementRef = useRef<HTMLDivElement>(null);
+  
+  const isScrollTarget = scrollTargetId === reference.id;
+  
+  // Handle scroll-to functionality
+  useEffect(() => {
+    if (isScrollTarget && elementRef.current) {
+      // Smooth scroll to center
+      elementRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+      
+      // Flash highlight effect (yellow ring)
+      elementRef.current.classList.add('ring-4', 'ring-yellow-400');
+      setTimeout(() => {
+        elementRef.current?.classList.remove('ring-4', 'ring-yellow-400');
+        clearScrollTarget();
+      }, 1500);
+    }
+  }, [isScrollTarget, clearScrollTarget]);
+  
+  return (
+    <div ref={elementRef} data-selectable-id={reference.id}>
+      {children}
+    </div>
+  );
+}
+```
+
+**Triggering from Chat Messages**:
+
+When rendering assistant messages with references, clicking scrolls to the item:
+
+```typescript
+// In thread.tsx - Reference link component
+const { cleanText, references } = parseReferences(text);
+const scrollToItem = useSelectionStore((s) => s.scrollToItem);
+
+// Render clickable reference
+<ReferenceLink
+  ref={ref}
+  onClick={() => {
+    if (ref.id) {
+      scrollToItem(ref.id);
+    }
+  }}
+/>
+```
+
+**Visual States**:
+- **Hover highlight**: Blue ring (`ring-2 ring-blue-400`)
+- **Selected highlight**: Green ring (`ring-2 ring-emerald-500`)
+- **Scroll target flash**: Yellow ring (`ring-4 ring-yellow-400`) for 1.5s
+
+**Use Cases**:
+1. Agent mentions "Use Case 1" → user clicks → canvas scrolls to Use Case 1
+2. Tool call modifies "Module A" → canvas auto-scrolls to show the change
+3. Reference chips in composer → click to preview item in canvas
+
+---
+
 ## Summary: Advanced Features
 
 | Feature | Project | Key Files | Complexity |
@@ -788,6 +1012,8 @@ registerRenderer('fern-document', FernDocumentRenderer);
 | Landing page message | BPMv0 | `MyAssistant.tsx` | Low |
 | Tool group display | Both | `tool-group-*.tsx` | Medium |
 | Renderer registry | Both | `canvas/registry.ts` | Medium |
+| **UserForm code block** | BPMv0 | `userform/` | **High** |
+| **Canvas item highlighting** | BPMv0 | `SelectableItemWrapper.tsx` | Medium |
 
 ---
 
@@ -795,8 +1021,12 @@ registerRenderer('fern-document', FernDocumentRenderer);
 
 For sharing with the assistant-ui team, prioritize:
 
-1. **Canvas from URL** - Simple, high value, easy to upstream
-2. **Auto-open on tool complete** - Common pattern, worth standardizing
-3. **Renderer registry** - Good architecture pattern
+1. **UserForm code block** - **High value** - Generative UI pattern that should be default behavior
+2. **Canvas from URL** - Simple, high value, easy to upstream
+3. **Auto-open on tool complete** - Common pattern, worth standardizing
+4. **Canvas item highlighting** - Visual connection between chat and canvas
+5. **Renderer registry** - Good architecture pattern
 
 The **reference chips** feature is very domain-specific (BPM) but the pattern could be generalized for any "attachment" or "context" system.
+
+The **UserForm** pattern is particularly important - it enables agents to output interactive UI via markdown code blocks, and users can submit responses back as messages. This "send-as-message from generative UI" should be a default behavior in assistant-ui.

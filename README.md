@@ -9,7 +9,7 @@
 | Document | Description |
 |----------|-------------|
 | [**Bug Fixes**](./analysis/bugs-fixed.md) | 4 bugs fixed with root cause analysis and code |
-| [**New Features**](./analysis/new-features.md) | 15 features added (9 base + 6 advanced) |
+| [**New Features**](./analysis/new-features.md) | 17 features added (9 base + 8 advanced) |
 | [**Coding Patterns**](./analysis/patterns.md) | Good patterns & areas for improvement |
 | [**API Comparison**](./analysis/api-comparison.md) | Our impl vs official v0.7+ APIs |
 | [**Cleanup TODO**](./cleanup-tasks/TODO.md) | Prioritized tasks for upstream contribution |
@@ -30,7 +30,7 @@
 
 ---
 
-## ✨ New Features (15 items)
+## ✨ New Features (17 items)
 
 ### Base Template Features (9)
 
@@ -46,7 +46,7 @@
 | 8 | [Streamdown Code Registry](./analysis/new-features.md#8-streamdown-with-custom-code-block-registry) | Pluggable code block handlers | `streamdown-text.tsx` |
 | 9 | [Loading States](./analysis/new-features.md#9-comprehensive-loading-states) | Visual feedback for async ops | Multiple files |
 
-### Advanced Features (6) - from BPMv0 & FernDocsAgent
+### Advanced Features (8) - from BPMv0 & FernDocsAgent
 
 | # | Feature | Purpose | Key Files |
 |---|---------|---------|-----------|
@@ -56,6 +56,8 @@
 | 13 | [Landing Page Message](./analysis/new-features.md#13-landing-page-initial-message) | Auto-send from landing page | `MyAssistant.tsx` |
 | 14 | [Tool Group Display](./analysis/new-features.md#14-tool-group-context--display) | Group related tool calls | `tool-group-*.tsx` |
 | 15 | [Renderer Registry](./analysis/new-features.md#15-canvas-renderer-registry) | Pluggable canvas renderers | `canvas/registry.ts` |
+| 16 | [UserForm Code Block](./analysis/new-features.md#16-userform-code-block-generative-ui-with-send-as-message) | **Generative UI with send-as-message** | `userform/` |
+| 17 | [Canvas Highlighting](./analysis/new-features.md#17-canvas-item-highlighting-scroll-to--flash) | Scroll-to & flash canvas items | `SelectableItemWrapper.tsx` |
 
 **→ [Full details with code snippets](./analysis/new-features.md)**
 
@@ -115,9 +117,11 @@ Features we think could benefit the main project:
 | **High** | Message sanitization | Bug fix | Low |
 | **High** | Error display component (thread loading, stream, tool errors) | New component | Medium |
 | **High** | Streamdown code block registry (pluggable custom widgets) | Pattern | Low |
+| **High** | **UserForm code block (generative UI → send as message)** | **Pattern** | **Medium** |
 | **Medium** | Loading states pattern (tool running, composer, avatar) | Pattern | Low |
 | **Medium** | Canvas system | New feature | High |
 | **Medium** | Canvas from URL | Enhancement | Low |
+| **Medium** | Canvas item highlighting (scroll-to & flash) | Pattern | Low |
 | **Low** | Reference chips (attachment chips in input like Cursor) | New feature | High |
 
 ---
