@@ -9,7 +9,7 @@
 | Document | Description |
 |----------|-------------|
 | [**Bug Fixes**](./analysis/bugs-fixed.md) | 4 bugs fixed with root cause analysis and code |
-| [**New Features**](./analysis/new-features.md) | 13 features added (7 base + 6 advanced) |
+| [**New Features**](./analysis/new-features.md) | 15 features added (9 base + 6 advanced) |
 | [**Coding Patterns**](./analysis/patterns.md) | Good patterns & areas for improvement |
 | [**API Comparison**](./analysis/api-comparison.md) | Our impl vs official v0.7+ APIs |
 | [**Cleanup TODO**](./cleanup-tasks/TODO.md) | Prioritized tasks for upstream contribution |
@@ -30,9 +30,9 @@
 
 ---
 
-## ✨ New Features (13 items)
+## ✨ New Features (15 items)
 
-### Base Template Features (7)
+### Base Template Features (9)
 
 | # | Feature | Purpose | Key Files |
 |---|---------|---------|-----------|
@@ -43,17 +43,19 @@
 | 5 | [User Thread Filtering](./analysis/new-features.md#5-user-based-thread-filtering) | Filter threads by user_id | `chatApi.ts`, `thread-list-runtime.tsx` |
 | 6 | [Enhanced Tool Fallback](./analysis/new-features.md#6-enhanced-tool-fallback-ui) | Collapsible tool UI with JSON viewer | `tool-fallback.tsx` |
 | 7 | [Thinking Indicator](./analysis/new-features.md#7-thinking-indicator) | Animated "Agent is thinking..." | `thread.tsx` |
+| 8 | [Streamdown Code Registry](./analysis/new-features.md#8-streamdown-with-custom-code-block-registry) | Pluggable code block handlers | `streamdown-text.tsx` |
+| 9 | [Loading States](./analysis/new-features.md#9-comprehensive-loading-states) | Visual feedback for async ops | Multiple files |
 
 ### Advanced Features (6) - from BPMv0 & FernDocsAgent
 
 | # | Feature | Purpose | Key Files |
 |---|---------|---------|-----------|
-| 8 | [Canvas from URL](./analysis/new-features.md#8-canvas-auto-open-from-url-parameter) | Deep link to open canvas | `MyAssistant.tsx` |
-| 9 | [Auto-open on Tool Complete](./analysis/new-features.md#9-auto-open-canvas-on-tool-completion) | Auto-show canvas when tools finish | `canvas-preview.tsx` |
-| 10 | [Reference Chips](./analysis/new-features.md#10-reference-chips--file-attachments-in-composer) | Select items as message attachments | `composer/`, `lib/references/` |
-| 11 | [Landing Page Message](./analysis/new-features.md#11-landing-page-initial-message) | Auto-send from landing page | `MyAssistant.tsx` |
-| 12 | [Tool Group Display](./analysis/new-features.md#12-tool-group-context--display) | Group related tool calls | `tool-group-*.tsx` |
-| 13 | [Renderer Registry](./analysis/new-features.md#13-canvas-renderer-registry) | Pluggable canvas renderers | `canvas/registry.ts` |
+| 10 | [Canvas from URL](./analysis/new-features.md#10-canvas-auto-open-from-url-parameter) | Deep link to open canvas | `MyAssistant.tsx` |
+| 11 | [Auto-open on Tool Complete](./analysis/new-features.md#11-auto-open-canvas-on-tool-completion) | Auto-show canvas when tools finish | `canvas-preview.tsx` |
+| 12 | [Reference Chips](./analysis/new-features.md#12-reference-chips--file-attachments-in-composer) | Select items as message attachments | `composer/`, `lib/references/` |
+| 13 | [Landing Page Message](./analysis/new-features.md#13-landing-page-initial-message) | Auto-send from landing page | `MyAssistant.tsx` |
+| 14 | [Tool Group Display](./analysis/new-features.md#14-tool-group-context--display) | Group related tool calls | `tool-group-*.tsx` |
+| 15 | [Renderer Registry](./analysis/new-features.md#15-canvas-renderer-registry) | Pluggable canvas renderers | `canvas/registry.ts` |
 
 **→ [Full details with code snippets](./analysis/new-features.md)**
 
@@ -111,10 +113,12 @@ Features we think could benefit the main project:
 |----------|---------|------|--------|
 | **High** | Auto-scroll fix | Bug fix | Low |
 | **High** | Message sanitization | Bug fix | Low |
-| **High** | Error display component(For thread loading, stream and tool results) | New component | Medium |
+| **High** | Error display component (thread loading, stream, tool errors) | New component | Medium |
+| **High** | Streamdown code block registry (pluggable custom widgets) | Pattern | Low |
+| **Medium** | Loading states pattern (tool running, composer, avatar) | Pattern | Low |
 | **Medium** | Canvas system | New feature | High |
 | **Medium** | Canvas from URL | Enhancement | Low |
-| **Low** | Reference chips (attachment chips in the input like cursor) | New feature | High |
+| **Low** | Reference chips (attachment chips in input like Cursor) | New feature | High |
 
 ---
 

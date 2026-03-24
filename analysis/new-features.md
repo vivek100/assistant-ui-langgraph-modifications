@@ -295,6 +295,188 @@ export const ToolFallback: FC<ToolFallbackProps> = ({ toolName, argsText, result
 
 ---
 
+---
+
+## 8. Streamdown with Custom Code Block Registry
+
+**Purpose**: Enhanced markdown rendering with pluggable code block handlers for custom UI widgets.
+
+**Files**:
+- `components/assistant-ui/streamdown-text.tsx` - Main component with registry
+- `components/assistant-ui/register-code-blocks.ts` - Handler registration
+
+**Key Implementation**:
+
+```typescript
+// Registry for custom code block handlers
+const codeBlockHandlers = new Map<string, CodeBlockHandler>();
+
+/**
+ * Register a custom code block handler for a specific language prefix.
+ * 
+ * @example
+ * // Register handler for ```mywidget blocks
+ * registerCodeBlockHandler('language-mywidget', MyWidgetCodeBlock);
+ * 
+ * // Register handler for ```chart:* blocks (prefix match)
+ * registerCodeBlockHandler('language-chart:', ChartCodeBlock);
+ */
+export function registerCodeBlockHandler(
+  languagePrefix: string,
+  handler: CodeBlockHandler
+): void {
+  codeBlockHandlers.set(languagePrefix, handler);
+}
+```
+
+**Custom Code Component** (routes to handlers):
+
+```typescript
+const CustomCodeComponent: FC<CodeBlockProps> = (props) => {
+  const className = props.className || "";
+  
+  // Check for exact match first
+  if (codeBlockHandlers.has(className)) {
+    const Handler = codeBlockHandlers.get(className)!;
+    return <Handler {...props} />;
+  }
+  
+  // Check for prefix match (e.g., "language-chart:" matches "language-chart:bar")
+  for (const [prefix, Handler] of codeBlockHandlers) {
+    if (prefix.endsWith(':') && className.startsWith(prefix)) {
+      return <Handler {...props} />;
+    }
+  }
+  
+  // Fallback to Streamdown's built-in handlers
+  // ...
+};
+```
+
+**Usage Example** (from BPMv0):
+
+```typescript
+// register-code-blocks.ts
+import { registerCodeBlockHandler } from "./streamdown-text";
+import { SubagentCodeBlock } from "./canvas/renderers/subagent-codeblock";
+import { UserFormCodeBlock } from "./canvas/renderers/userform";
+
+export function registerAllCodeBlockHandlers() {
+  // Register handler for ```subagent blocks
+  registerCodeBlockHandler("language-subagent", SubagentCodeBlock);
+  
+  // Register handler for ```userform blocks (interactive confirmation forms)
+  registerCodeBlockHandler("language-userform", UserFormCodeBlock);
+}
+
+// Auto-register on import
+registerAllCodeBlockHandlers();
+```
+
+**Benefits**:
+- Agents can output custom UI widgets via markdown code blocks
+- Supports exact match (`language-subagent`) and prefix match (`language-chart:`)
+- Falls back to Streamdown's built-in syntax highlighting
+- Safe text handling for non-string content
+
+---
+
+## 9. Comprehensive Loading States
+
+**Purpose**: Visual feedback throughout the UI for async operations.
+
+**Locations**:
+
+### Thread List Loading
+**File**: `components/assistant-ui/thread-list.tsx`
+
+```typescript
+const { threads, isLoading, deleteThreadById } = useLangGraphThreadList({ userId });
+
+// In render:
+{isLoading && <div className="text-sm text-muted-foreground px-2">Loading threads...</div>}
+```
+
+### Tool Running State
+**File**: `components/assistant-ui/tool-fallback.tsx`
+
+```typescript
+const isRunning = result === undefined;
+
+{isRunning ? (
+  <span className="text-xs inline-flex items-center gap-1 rounded-full border px-2 py-1">
+    <Loader2 className="size-3 animate-spin" />
+    Running…
+  </span>
+) : (
+  <span className="text-xs inline-flex items-center gap-1 text-emerald-600">
+    <CheckIcon className="size-3" />
+    Completed
+  </span>
+)}
+```
+
+### Composer State (Running vs Idle)
+**File**: `components/assistant-ui/thread.tsx`
+
+```typescript
+<ThreadPrimitive.If running={false}>
+  <ComposerPrimitive.Input placeholder="Send a message..." />
+</ThreadPrimitive.If>
+
+<ThreadPrimitive.If running>
+  <ComposerPrimitive.Input placeholder="Agent is thinking..." disabled />
+</ThreadPrimitive.If>
+```
+
+### Send/Cancel Button Toggle
+**File**: `components/assistant-ui/thread.tsx`
+
+```typescript
+<ThreadPrimitive.If running={false}>
+  <ComposerPrimitive.Send asChild>
+    <Button><ArrowUpIcon /></Button>
+  </ComposerPrimitive.Send>
+</ThreadPrimitive.If>
+
+<ThreadPrimitive.If running>
+  <ComposerPrimitive.Cancel asChild>
+    <Button className="bg-red-600"><Square /></Button>
+  </ComposerPrimitive.Cancel>
+</ThreadPrimitive.If>
+```
+
+### Avatar Animation
+**File**: `components/assistant-ui/thread.tsx`
+
+```typescript
+<ThreadPrimitive.If running>
+  <motion.div
+    initial={{ scale: 1 }}
+    animate={{ scale: [1, 1.15, 1] }}
+    transition={{ duration: 1.5, repeat: Infinity }}
+  >
+    <StarIcon size={14} />
+  </motion.div>
+</ThreadPrimitive.If>
+<ThreadPrimitive.If running={false}>
+  <StarIcon size={14} />
+</ThreadPrimitive.If>
+```
+
+### Action Bar Auto-Hide
+**File**: `components/assistant-ui/thread.tsx`
+
+```typescript
+<ActionBarPrimitive.Root
+  hideWhenRunning  // Hides edit/copy buttons while agent is responding
+  autohide="not-last"
+  autohideFloat="single-branch"
+>
+```
+
+---
+
 ## Summary Table
 
 | Feature | Files | Official Equivalent | Action |
@@ -306,6 +488,8 @@ export const ToolFallback: FC<ToolFallbackProps> = ({ toolName, argsText, result
 | User Thread Filtering | `chatApi.ts`, `thread-list-runtime.tsx` | Cloud persistence | Document as pattern |
 | Tool Fallback | `tool-fallback.tsx` | `ToolFallback` component | Compare & align |
 | Thinking Indicator | `thread.tsx` | None | Propose as feature |
+| **Streamdown Code Registry** | `streamdown-text.tsx` | Streamdown lib | **Propose as pattern** |
+| **Loading States** | Multiple files | Partial (primitives) | **Document as pattern** |
 
 ---
 
@@ -315,7 +499,7 @@ The following features were developed in more advanced projects (`BPMv0/bpmv0Fro
 
 ---
 
-## 8. Canvas Auto-Open from URL Parameter
+## 10. Canvas Auto-Open from URL Parameter
 
 **Purpose**: Open canvas with a specific document when navigating via URL (e.g., `/app/chat?documentId=abc123`).
 
@@ -374,7 +558,7 @@ function AutoOpenCanvas({ children }: { children: ReactNode }) {
 
 ---
 
-## 9. Auto-Open Canvas on Tool Completion
+## 11. Auto-Open Canvas on Tool Completion
 
 **Purpose**: Automatically open canvas when certain tools complete successfully (e.g., `create_document`, `apply_json_patch`).
 
@@ -420,7 +604,7 @@ useEffect(() => {
 
 ---
 
-## 10. Reference Chips / File Attachments in Composer
+## 12. Reference Chips / File Attachments in Composer
 
 **Purpose**: Allow users to select items from the canvas and reference them in messages, displayed as chips above the input.
 
@@ -514,7 +698,7 @@ User's actual question about these items...
 
 ---
 
-## 11. Landing Page Initial Message
+## 13. Landing Page Initial Message
 
 **Purpose**: Auto-send a message when navigating from a landing page with a pre-filled prompt.
 
@@ -552,7 +736,7 @@ useEffect(() => {
 
 ---
 
-## 12. Tool Group Context & Display
+## 14. Tool Group Context & Display
 
 **Purpose**: Group related tool calls together in the UI (e.g., all tools from a subagent).
 
@@ -567,7 +751,7 @@ useEffect(() => {
 
 ---
 
-## 13. Canvas Renderer Registry
+## 15. Canvas Renderer Registry
 
 **Purpose**: Pluggable renderer system for different tool result types.
 
